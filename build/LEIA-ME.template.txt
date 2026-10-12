@@ -1,0 +1,79 @@
+EXTRATOR DE MÍDIAS (MediaRescue) - versão {{VERSION}}
+=====================================================
+
+Este programa copia os vídeos dos seus CDs e DVDs para o computador ou para
+um pendrive/HD externo, mesmo quando o disco está riscado ou envelhecido.
+Ele não usa a internet e não precisa ser instalado.
+
+
+COMO ABRIR
+----------
+1. Extraia (descompacte) esta pasta inteira, por exemplo para a Área de
+   Trabalho. Não abra o programa de dentro do arquivo .zip.
+2. Dê dois cliques em "MediaRescue.exe".
+3. Na primeira vez, o Windows pode mostrar uma tela azul "O Windows
+   protegeu o computador" (SmartScreen). Isso acontece porque o programa não
+   tem assinatura digital paga. Clique em "Mais informações" e depois em
+   "Executar assim mesmo".
+
+Mantenha a pasta "tools" ao lado do MediaRescue.exe: ela permite mostrar a
+duração e a resolução dos vídeos. Sem ela o programa funciona do mesmo jeito,
+apenas sem esses detalhes.
+
+
+COMO USAR
+---------
+1. Coloque o disco no leitor. Aguarde a mensagem "Disco pronto".
+2. Em "DESTINO", clique em "Procurar..." e escolha a pasta (ou o pendrive)
+   onde os vídeos serão guardados.
+3. Em "Nome da pasta", digite um nome para o disco (por exemplo
+   "Formatura 2009").
+4. Clique em "EXTRAIR DISCO" e espere. Você pode usar o computador, mas
+   não feche o programa nem retire o disco ou o cabo do leitor.
+5. Ao terminar, o programa mostra um resumo e (se estiver configurado)
+   ejeta o disco. Clique em "Abrir pasta" para ver os vídeos.
+
+Para vários discos seguidos, ligue a chave "Modo lote" no canto superior
+direito: o programa só pergunta o nome de cada disco.
+
+Para ter também cópias em MP4 (boas para celular e TV), marque "Converter os
+vídeos para MP4 depois da cópia", ao lado do botão EXTRAIR DISCO. Os arquivos
+originais ficam intactos e os MP4 vão para a subpasta "MP4" da pasta do disco.
+Essa opção só aparece com a pasta "tools" ao lado do programa.
+
+
+O QUE SIGNIFICAM OS RESULTADOS
+------------------------------
+Íntegro    - O arquivo foi copiado e conferido: é idêntico ao do disco.
+Recuperado - Houve dificuldade de leitura, mas tudo foi lido no fim.
+Parcial    - Alguns trechos do disco não puderam ser lidos. O vídeo abre,
+             mas pode ter "pulos". A lista do que faltou fica no arquivo
+             "LEIA-ME - ERROS.txt", dentro da pasta do disco.
+Falhou     - Não foi possível ler nada daquele arquivo.
+
+
+DICAS
+-----
+- Disco riscado: limpe com pano macio, do centro para a borda, e tente de
+  novo. Em "Configurações" deixe ligada a opção de reduzir a velocidade.
+- Leitor USB fino: ligue direto numa porta do computador (não em hub). Se
+  ele não girar ou ficar desconectando, use um cabo com duas pontas USB.
+- Use "Testar leitor" para saber se o problema é do leitor ou do disco.
+- Pendrive FAT32 não guarda arquivos de 4 GB ou mais: use exFAT ou NTFS.
+
+
+ONDE FICAM OS REGISTROS E AS CONFIGURAÇÕES
+------------------------------------------
+%LOCALAPPDATA%\MediaRescue\   (cole esse endereço na barra do Explorador)
+   settings.json  - configurações
+   catalog.json   - histórico dos discos já copiados
+   logs\          - registros (o botão "Abrir log" abre o mais recente)
+
+
+NÃO FUNCIONA COM
+----------------
+Discos comerciais protegidos contra cópia, CDs de áudio e Blu-ray.
+
+
+Licenças de terceiros: veja THIRD-PARTY-NOTICES.md.
+Licença do programa: MIT (arquivo LICENSE).

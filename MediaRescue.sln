@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4584F1E6-F4D3-45D4-A9A1-4543124ED08D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaRescue.App", "src\MediaRescue.App\MediaRescue.App.csproj", "{F1649129-F055-4539-84C8-9388B27ACE9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaRescue.Core", "src\MediaRescue.Core\MediaRescue.Core.csproj", "{3ECB19A9-47DE-462A-B20B-254F8336EE04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaRescue.Windows", "src\MediaRescue.Windows\MediaRescue.Windows.csproj", "{E5FD0AA7-A416-4911-8C6C-4EEF94CE1A5D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{3EEE7E81-75DD-4AB7-82E7-B318046C166B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaRescue.Core.Tests", "tests\MediaRescue.Core.Tests\MediaRescue.Core.Tests.csproj", "{53C3674D-30A8-4197-B22A-ED114195C337}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaRescue.Integration.Tests", "tests\MediaRescue.Integration.Tests\MediaRescue.Integration.Tests.csproj", "{2DF495C0-240A-4F33-8E23-EA8E10359AA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaRescue.App.Tests", "tests\MediaRescue.App.Tests\MediaRescue.App.Tests.csproj", "{A074B043-B03F-4085-9A7E-D566989B6741}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F1649129-F055-4539-84C8-9388B27ACE9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1649129-F055-4539-84C8-9388B27ACE9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1649129-F055-4539-84C8-9388B27ACE9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1649129-F055-4539-84C8-9388B27ACE9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ECB19A9-47DE-462A-B20B-254F8336EE04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ECB19A9-47DE-462A-B20B-254F8336EE04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ECB19A9-47DE-462A-B20B-254F8336EE04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ECB19A9-47DE-462A-B20B-254F8336EE04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5FD0AA7-A416-4911-8C6C-4EEF94CE1A5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5FD0AA7-A416-4911-8C6C-4EEF94CE1A5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5FD0AA7-A416-4911-8C6C-4EEF94CE1A5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5FD0AA7-A416-4911-8C6C-4EEF94CE1A5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53C3674D-30A8-4197-B22A-ED114195C337}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53C3674D-30A8-4197-B22A-ED114195C337}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53C3674D-30A8-4197-B22A-ED114195C337}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53C3674D-30A8-4197-B22A-ED114195C337}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DF495C0-240A-4F33-8E23-EA8E10359AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DF495C0-240A-4F33-8E23-EA8E10359AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DF495C0-240A-4F33-8E23-EA8E10359AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DF495C0-240A-4F33-8E23-EA8E10359AA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A074B043-B03F-4085-9A7E-D566989B6741}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A074B043-B03F-4085-9A7E-D566989B6741}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A074B043-B03F-4085-9A7E-D566989B6741}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A074B043-B03F-4085-9A7E-D566989B6741}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F1649129-F055-4539-84C8-9388B27ACE9A} = {4584F1E6-F4D3-45D4-A9A1-4543124ED08D}
+		{3ECB19A9-47DE-462A-B20B-254F8336EE04} = {4584F1E6-F4D3-45D4-A9A1-4543124ED08D}
+		{E5FD0AA7-A416-4911-8C6C-4EEF94CE1A5D} = {4584F1E6-F4D3-45D4-A9A1-4543124ED08D}
+		{53C3674D-30A8-4197-B22A-ED114195C337} = {3EEE7E81-75DD-4AB7-82E7-B318046C166B}
+		{2DF495C0-240A-4F33-8E23-EA8E10359AA7} = {3EEE7E81-75DD-4AB7-82E7-B318046C166B}
+		{A074B043-B03F-4085-9A7E-D566989B6741} = {3EEE7E81-75DD-4AB7-82E7-B318046C166B}
+	EndGlobalSection
+EndGlobal

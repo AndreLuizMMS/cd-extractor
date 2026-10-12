@@ -1,0 +1,26 @@
+<Window x:Class="MediaRescue.App.Views.NamePromptWindow" Icon="/Assets/app.ico"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource AppWindow}"
+        Width="540" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" Title="Nome do disco">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="28,26,28,20">
+            <TextBlock x:Name="TitleText" FontSize="19" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <TextBlock x:Name="MessageText" TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,0,0,14"/>
+            <TextBlock Text="Nome da pasta" FontWeight="SemiBold" Margin="0,0,0,6"/>
+            <TextBox x:Name="NameBox" AutomationProperties.Name="Nome da pasta do disco" TextChanged="NameBox_TextChanged"/>
+            <CheckBox x:Name="DontAsk" Margin="0,16,0,0" Content="Não perguntar de novo: usar sempre o nome sugerido"/>
+        </StackPanel>
+        <Border Grid.Row="1" Background="{DynamicResource Brush.SurfaceAlt}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0" Padding="20,14">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelButton" Content="Cancelar" IsCancel="True" MinWidth="96" Margin="0,0,10,0"/>
+                <Button x:Name="OkButton" Content="Usar este nome" IsDefault="True" Style="{StaticResource PrimaryButton}" MinWidth="130" Click="Ok_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

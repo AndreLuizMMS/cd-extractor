@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>MediaRescue.App</RootNamespace>
+    <AssemblyName>MediaRescue.App</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Keep equal to build\VERSION: dev builds and published builds report the same version (publish.ps1 also passes it on the command line). -->
+    <Version>1.0.0</Version>
+    <AssemblyTitle>Extrator de Mídias</AssemblyTitle>
+    <Product>Extrator de Mídias (MediaRescue)</Product>
+    <SatelliteResourceLanguages>pt-BR</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaRescue.Core\MediaRescue.Core.csproj" />
+    <!-- The Windows layer is only needed by the real composition (#if !DEMO_ONLY). Build with -p:DefineConstants=DEMO_ONLY
+         to build the UI without it; remove that property at integration time. -->
+    <ProjectReference Include="..\MediaRescue.Windows\MediaRescue.Windows.csproj" Condition="!$(DefineConstants.Contains('DEMO_ONLY'))" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MediaRescue.App.Tests" />
+  </ItemGroup>
+
+</Project>

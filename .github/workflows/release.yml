@@ -1,0 +1,122 @@
+name: Release
+
+# Push a tag such as v1.0.0 to build, test and publish a GitHub Release with the portable zip.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version without the "v" (empty = contents of build/VERSION)'
+        required: false
+        default: ''
+      create_release:
+        description: 'Create the GitHub Release (false = only build and upload the zip as a workflow artifact)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # needed by "gh release create"
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve version
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') { $v = $env:GITHUB_REF_NAME }
+          elseif ($env:INPUT_VERSION) { $v = $env:INPUT_VERSION }
+          else { $v = (Get-Content build/VERSION -Raw).Trim() }
+          $v = $v -replace '^[vV]', ''
+          if ($v -notmatch '^\d+\.\d+\.\d+([-+][0-9A-Za-z.\-]+)?$') { throw "Invalid version '$v'" }
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Version: $v"
+
+      - name: Restore
+        run: dotnet restore MediaRescue.sln
+
+      - name: Build (Release)
+        run: dotnet build MediaRescue.sln -c Release --no-restore --nologo
+
+      # Required: a failing test stops the release.
+      - name: Unit tests - Core (required)
+        run: dotnet test tests/MediaRescue.Core.Tests -c Release --no-build --nologo --logger "trx;LogFileName=core.trx" --results-directory TestResults
+
+      - name: Unit tests - App (required)
+        run: dotnet test tests/MediaRescue.App.Tests -c Release --no-build --nologo --logger "trx;LogFileName=app.trx" --results-directory TestResults
+
+      # Needs Mount-DiskImage (may be refused on the runner) and ffmpeg + synthetic media for the probe tests.
+      - name: Prepare tools and synthetic media for the integration tests
+        continue-on-error: true
+        shell: powershell
+        run: |
+          ./build/fetch-tools.ps1
+          ./build/make-test-media.ps1
+
+      - name: Integration tests (informational, may be skipped)
+        continue-on-error: true
+        run: dotnet test tests/MediaRescue.Integration.Tests -c Release --no-build --nologo --logger "trx;LogFileName=integration.trx" --results-directory TestResults
+
+      - name: Publish portable zip
+        id: publish
+        shell: powershell
+        run: ./build/publish.ps1 -Version $env:VERSION
+
+      # The published exe is self-contained; run its built-in smoke test (window opens, exit code 0).
+      # Informational: hosted runners do not always provide an interactive desktop.
+      - name: Smoke test of the published exe
+        continue-on-error: true
+        shell: powershell
+        run: |
+          $exe = "dist/MediaRescue-$env:VERSION-win-x64/MediaRescue.exe"
+          $p = Start-Process -FilePath $exe -ArgumentList '--demo','--smoke' -PassThru
+          if (-not $p.WaitForExit(90000)) { $p.Kill(); throw 'smoke test timed out' }
+          if ($p.ExitCode -ne 0) { throw "smoke test exit code $($p.ExitCode)" }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaRescue-${{ env.VERSION }}-win-x64
+          path: |
+            dist/MediaRescue-${{ env.VERSION }}-win-x64.zip
+            dist/MediaRescue-${{ env.VERSION }}-win-x64.zip.sha256
+          if-no-files-found: error
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+      - name: Create GitHub Release
+        if: ${{ github.ref_type == 'tag' || inputs.create_release }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "v$env:VERSION"
+          $zip = "dist/MediaRescue-$env:VERSION-win-x64.zip"
+          $sha = "$zip.sha256"
+          $notes = @"
+          Download **MediaRescue-$env:VERSION-win-x64.zip**, extract the whole folder and run ``MediaRescue.exe``
+          (portable, no installer, no administrator rights; Windows 10/11 64-bit).
+          The executable is not code-signed: if SmartScreen appears, choose "More info" > "Run anyway".
+
+          SHA-256 of the zip is in the attached ``.sha256`` file. See CHANGELOG.md and README.md (pt-BR).
+          "@
+          $ghArgs = @($tag, $zip, $sha, '--title', "Extrator de Midias $env:VERSION", '--notes', $notes, '--generate-notes')
+          if ($env:VERSION -match '-') { $ghArgs += '--prerelease' }
+          if ($env:GITHUB_REF_TYPE -ne 'tag') { $ghArgs += @('--target', $env:GITHUB_SHA) }
+          gh release create @ghArgs

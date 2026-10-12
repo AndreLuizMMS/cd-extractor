@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore MediaRescue.sln
+
+      - name: Build (Release)
+        run: dotnet build MediaRescue.sln -c Release --no-restore --nologo
+
+      - name: Unit tests - Core
+        run: dotnet test tests/MediaRescue.Core.Tests -c Release --no-build --nologo --logger "trx;LogFileName=core.trx" --results-directory TestResults
+
+      - name: Unit tests - App (view models, no window)
+        run: dotnet test tests/MediaRescue.App.Tests -c Release --no-build --nologo --logger "trx;LogFileName=app.trx" --results-directory TestResults
+
+      # Needs Mount-DiskImage and, for some tests, ffmpeg (not downloaded in CI). Tests that cannot run are
+      # reported as skipped with the reason; a failure here is informational only.
+      - name: Integration tests (informational)
+        continue-on-error: true
+        run: dotnet test tests/MediaRescue.Integration.Tests -c Release --no-build --nologo --logger "trx;LogFileName=integration.trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore

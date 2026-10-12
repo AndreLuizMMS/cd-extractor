@@ -1,0 +1,15 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:v="clr-namespace:MediaRescue.App.Views">
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    <v:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    <v:HasValueToVisibilityConverter x:Key="HasValueToVis"/>
+    <v:IsEmptyToVisibilityConverter x:Key="IsEmptyToVis"/>
+    <v:ZeroToVisibilityConverter x:Key="ZeroToVis"/>
+    <v:BoolNotConverter x:Key="NotConverter"/>
+    <v:IndentConverter x:Key="Indent"/>
+    <v:ProgressVisualToTaskbarConverter x:Key="VisualToTaskbar"/>
+    <v:IsErrorVisualConverter x:Key="IsErrorVisual"/>
+</ResourceDictionary>
+
+

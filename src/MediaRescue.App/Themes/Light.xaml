@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Light palette. Text/background pairs are AA (>= 4.5:1). One accent colour. -->
+    <SolidColorBrush x:Key="Brush.Window" Color="#F3F5F8"/>
+    <SolidColorBrush x:Key="Brush.Surface" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.SurfaceAlt" Color="#F7F9FB"/>
+    <SolidColorBrush x:Key="Brush.Border" Color="#D5DBE3"/>
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#8A94A3"/>
+    <SolidColorBrush x:Key="Brush.Text" Color="#1B2430"/>
+    <SolidColorBrush x:Key="Brush.TextMuted" Color="#566273"/>
+    <SolidColorBrush x:Key="Brush.Accent" Color="#0B63C5"/>
+    <SolidColorBrush x:Key="Brush.AccentHover" Color="#0A56AB"/>
+    <SolidColorBrush x:Key="Brush.AccentPressed" Color="#084A94"/>
+    <SolidColorBrush x:Key="Brush.OnAccent" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.AccentSoft" Color="#E4EFFC"/>
+    <SolidColorBrush x:Key="Brush.Hover" Color="#EDF1F6"/>
+    <SolidColorBrush x:Key="Brush.Pressed" Color="#E0E6EE"/>
+    <SolidColorBrush x:Key="Brush.Ok" Color="#17703A"/>
+    <SolidColorBrush x:Key="Brush.OkSoft" Color="#E3F4EA"/>
+    <SolidColorBrush x:Key="Brush.Warn" Color="#8F5B00"/>
+    <SolidColorBrush x:Key="Brush.WarnSoft" Color="#FFF3D6"/>
+    <SolidColorBrush x:Key="Brush.Danger" Color="#B42318"/>
+    <SolidColorBrush x:Key="Brush.DangerSoft" Color="#FDE8E6"/>
+    <SolidColorBrush x:Key="Brush.TrackBg" Color="#DCE2EA"/>
+    <SolidColorBrush x:Key="Brush.Scroll" Color="#B4BDC9"/>
+    <SolidColorBrush x:Key="Brush.ScrollHover" Color="#8A94A3"/>
+    <SolidColorBrush x:Key="Brush.Shadow" Color="#1A000000"/>
+</ResourceDictionary>

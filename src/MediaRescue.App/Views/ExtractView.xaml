@@ -1,0 +1,569 @@
+﻿<UserControl x:Class="MediaRescue.App.Views.ExtractView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:MediaRescue.App.Infrastructure">
+    <UserControl.Resources>
+        <Style x:Key="TreeToggle" TargetType="ToggleButton" BasedOn="{StaticResource ExpanderToggle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsContainer}" Value="False"><Setter Property="Visibility" Value="Hidden"/></DataTrigger>
+                <DataTrigger Binding="{Binding HasChildren}" Value="False"><Setter Property="Visibility" Value="Hidden"/></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NameText" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsContainer}" Value="True"><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger>
+                <DataTrigger Binding="{Binding HasIssue}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CellText" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style x:Key="ProgressBarStyle" TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Progress.Visual}" Value="Error"><Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/></DataTrigger>
+                <DataTrigger Binding="{Binding Progress.Visual}" Value="Paused"><Setter Property="Foreground" Value="{DynamicResource Brush.Warn}"/></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="20,16,20,16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="272"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ================= LEFT: reader + disc ================= -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="LEITOR" Style="{StaticResource SectionLabel}"/>
+                        <ComboBox ItemsSource="{Binding Drives}" SelectedItem="{Binding SelectedDrive}"
+                                  Visibility="{Binding HasMultipleDrives, Converter={StaticResource BoolToVis}}" Margin="0,0,0,10"
+                                  AutomationProperties.Name="Escolher o leitor">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/></DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding SelectedDrive.ModelName, FallbackValue='Nenhum leitor'}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="{Binding SelectedDrive.Letter, FallbackValue=''}" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                            <TextBlock Text="●" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding StatusTone}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding StatusTitle}" Margin="6,0,0,0" TextWrapping="Wrap" MaxWidth="200"
+                                       Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding StatusTone}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding DriveRows}" Margin="0,8,0,0" IsTabStop="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="86"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Label}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontSize="13"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <UniformGrid Columns="2" Margin="0,14,0,0">
+                            <Button Content="Ejetar" Command="{Binding EjectCommand}" Margin="0,0,5,0" AutomationProperties.Name="Ejetar o disco"/>
+                            <Button Content="Atualizar" Command="{Binding RefreshCommand}" Margin="5,0,0,0" AutomationProperties.Name="Atualizar o estado do leitor (F5)"/>
+                        </UniformGrid>
+                        <TextBlock Text="Indisponível durante a cópia." Style="{StaticResource MutedText}" FontSize="12.5" Margin="0,8,0,0"
+                                   Visibility="{Binding IsExtracting, Converter={StaticResource BoolToVis}}"/>
+                        <Border Style="{StaticResource ToneBox}" ui:Ui.Tone="Warn" Margin="0,12,0,0"
+                                Visibility="{Binding PowerTip, Converter={StaticResource HasValueToVis}}">
+                            <TextBlock Text="{Binding PowerTip}" TextWrapping="Wrap" FontSize="13"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="DISCO" Style="{StaticResource SectionLabel}"/>
+                        <ItemsControl ItemsSource="{Binding DiscRows}" IsTabStop="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,3">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="124"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Label}" Foreground="{DynamicResource Brush.TextMuted}" TextWrapping="Wrap" Margin="0,0,6,0"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Style="{StaticResource ToneBox}" ui:Ui.Tone="Accent" Margin="0,12,0,0"
+                                Visibility="{Binding DiscNotice, Converter={StaticResource HasValueToVis}}">
+                            <TextBlock Text="{Binding DiscNotice}" TextWrapping="Wrap" FontSize="13"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================= RIGHT: content, destination, progress ================= -->
+        <!-- The column fills the window height. When the cards do not fit (small window + a long result), the column scrolls instead of cutting a card off. -->
+        <ScrollViewer x:Name="RightScroll" Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <Grid Height="{Binding ViewportHeight, ElementName=RightScroll}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="MinHeight" Value="470"/>
+                    <Style.Triggers>
+                        <!-- the last-extraction card needs more room than the progress cards -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasResult}" Value="True"/>
+                                <Condition Binding="{Binding Mp4.IsActive}" Value="False"/>
+                                <Condition Binding="{Binding Progress.IsActive}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="MinHeight" Value="612"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="160"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Content -->
+            <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,14,16,10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="CONTEÚDO DO DISCO" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" Margin="0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Content.SummaryText}" Style="{StaticResource MutedText}" Margin="14,0,0,0" VerticalAlignment="Center" FontSize="13"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Visibility="{Binding ShowEmptyState, Converter={StaticResource InvBoolToVis}}">
+                            <Button Content="Marcar tudo" Command="{Binding Content.SelectAllCommand}" Style="{StaticResource GhostButton}" MinHeight="28" Padding="10,2"/>
+                            <Button Content="Desmarcar tudo" Command="{Binding Content.ClearAllCommand}" Style="{StaticResource GhostButton}" MinHeight="28" Padding="10,2"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Row="1" Visibility="{Binding ShowEmptyState, Converter={StaticResource InvBoolToVis}}">
+                        <TextBlock Text="{Binding Content.ProbeStatus}" Style="{StaticResource MutedText}" FontSize="12.5"
+                                   Visibility="{Binding Content.ProbeStatus, Converter={StaticResource HasValueToVis}}"/>
+                        <TextBlock Text="{Binding ProbeNotice}" Style="{StaticResource MutedText}" FontSize="12.5"
+                                   Visibility="{Binding ProbeNotice, Converter={StaticResource HasValueToVis}}"/>
+                    </StackPanel>
+
+                    <!-- column headers -->
+                    <!-- The line under the headers is a visible edge: a row that is only partly scrolled in is cut there instead of running into the header text. -->
+                    <Border Grid.Row="2" Margin="0,6,0,4" Padding="0,0,0,6" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Border}"
+                            Visibility="{Binding ShowEmptyState, Converter={StaticResource InvBoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="92"/>
+                                <ColumnDefinition Width="74"/>
+                                <ColumnDefinition Width="82"/>
+                                <ColumnDefinition Width="72"/>
+                                <ColumnDefinition Width="19"/><!-- scroll bar (12) + row border/padding, so the headers sit exactly over the cells -->
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Nome" Margin="46,0,0,0" Style="{StaticResource CellText}" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="1" Text="Tipo" Style="{StaticResource CellText}" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="2" Text="Duração" Style="{StaticResource CellText}" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="3" Text="Resolução" Style="{StaticResource CellText}" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="4" Text="Tamanho" Style="{StaticResource CellText}" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,4,0"/>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="3">
+                        <ListBox x:Name="ContentList" ItemsSource="{Binding Content.VisibleItems}" Style="{StaticResource PlainList}" ClipToBounds="True"
+                                 SelectionMode="Single" PreviewKeyDown="ContentList_PreviewKeyDown"
+                                 Visibility="{Binding ShowEmptyState, Converter={StaticResource InvBoolToVis}}"
+                                 AutomationProperties.Name="Conteúdo do disco. Use a barra de espaço para marcar ou desmarcar, e as setas direita e esquerda para abrir e fechar pastas.">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Height="34" ToolTip="{Binding ToolTipText}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="92"/>
+                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="82"/>
+                                            <ColumnDefinition Width="72"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid Margin="{Binding Indent, Converter={StaticResource Indent}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="22"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ToggleButton Style="{StaticResource TreeToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}" IsTabStop="False" VerticalAlignment="Center"/>
+                                            <CheckBox Grid.Column="1" IsChecked="{Binding IsChecked, Mode=TwoWay}" IsTabStop="False" VerticalAlignment="Center" Margin="4,0,8,0"
+                                                      AutomationProperties.Name="{Binding Name}"/>
+                                            <TextBlock Grid.Column="2" Text="⚠" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Danger}"
+                                                       Visibility="{Binding Issue, Converter={StaticResource HasValueToVis}}"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding Name}" Style="{StaticResource NameText}"/>
+                                        </Grid>
+                                        <TextBlock Grid.Column="1" Text="{Binding TypeText}" Style="{StaticResource CellText}" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding DurationText}" Style="{StaticResource CellText}"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding ResolutionText}" Style="{StaticResource CellText}"/>
+                                        <TextBlock Grid.Column="4" Text="{Binding SizeText}" Style="{StaticResource CellText}" TextAlignment="Right" Margin="0,0,4,0"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- empty state: always explains what to do -->
+                        <StackPanel Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+                            <TextBlock Text="◎" FontSize="44" HorizontalAlignment="Center" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding StatusTone}" Margin="0,0,0,2"/>
+                            <TextBlock Text="{Binding StatusTitle}" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                                       Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding StatusTone}"/>
+                            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource MutedText}" TextAlignment="Center" FontSize="14.5" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Destination -->
+            <Border Grid.Row="1" Margin="0,16,0,0" IsEnabled="{Binding IsIdle}">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                        <Style.Triggers>
+                            <!-- while copying or converting, the destination shrinks to one line to leave room for the progress card -->
+                            <DataTrigger Binding="{Binding IsIdle}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                            <DataTrigger Binding="{Binding Mp4.IsActive}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="DESTINO" Style="{StaticResource SectionLabel}" Margin="0,0,0,6"/>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding DestinationRoot, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Pasta de destino"/>
+                        <Button Grid.Column="1" Content="Procurar…" Command="{Binding BrowseCommand}" Margin="8,0,0,0" AutomationProperties.Name="Procurar a pasta de destino"/>
+                    </Grid>
+
+                    <ItemsControl Grid.Row="2" ItemsSource="{Binding QuickDrives}" Margin="0,8,0,0" IsTabStop="False">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Text}" ToolTip="{Binding ToolTip}" Command="{Binding SelectCommand}" Style="{StaticResource ChipButton}" Margin="0,0,6,6"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding DestinationIcon}" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding DestinationTone}" Margin="0,0,8,0" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding DestinationSummary}" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding DestinationTone}" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4">
+                        <ItemsControl ItemsSource="{Binding Issues}" IsTabStop="False" Margin="0,4,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Icon}" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding Tone}" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Message}" TextWrapping="Wrap" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding Tone}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="Desmarcar os arquivos que não cabem" Command="{Binding UncheckBlockedCommand}" Style="{StaticResource GhostButton}"
+                                HorizontalAlignment="Left" Padding="0,2" MinHeight="26"
+                                Visibility="{Binding HasBlockedFiles, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="5" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <!-- as wide as the column allows (up to 460), left-aligned; never wider than the column (batch mode makes it narrower) -->
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="460"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="Nome da pasta" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding FolderName, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nome da pasta do disco"/>
+                                    <TextBlock Grid.Column="1" Text="Digite um nome para a pasta do disco" IsHitTestVisible="False" Margin="11,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.TextMuted}" TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding FolderName, Converter={StaticResource IsEmptyToVis}}"/>
+                                </Grid>
+                            </Grid>
+                            <TextBlock Text="{Binding NameNote}" Style="{StaticResource MutedText}" FontSize="12.5" Margin="0,4,0,0" HorizontalAlignment="Left"
+                                       Visibility="{Binding NameNote, Converter={StaticResource HasValueToVis}}"/>
+                            <CheckBox IsChecked="{Binding ConvertThisExtraction}" IsEnabled="{Binding Mp4OptionEnabled}" Margin="0,10,0,0" HorizontalAlignment="Left"
+                                      Visibility="{Binding Mp4Available, Converter={StaticResource BoolToVis}}"
+                                      ToolTip="Depois da cópia, cria versões em MP4 dos vídeos na subpasta MP4 do disco. Os originais são mantidos."
+                                      AutomationProperties.Name="Converter os vídeos para MP4 depois da cópia">
+                                <!-- wraps onto a second line when the column is narrow (modo lote at the minimum window size) instead of running under the Extrair button -->
+                                <TextBlock Text="Converter os vídeos para MP4 depois da cópia" TextWrapping="Wrap"/>
+                            </CheckBox>
+                            <TextBlock Text="{Binding ExtractDisabledReason}" TextWrapping="Wrap" TextAlignment="Right" HorizontalAlignment="Right"
+                                       Margin="0,6,16,0" Foreground="{DynamicResource Brush.TextMuted}" FontSize="13.5"
+                                       Visibility="{Binding ExtractDisabledReason, Converter={StaticResource HasValueToVis}}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="EXTRAIR DISCO" Command="{Binding ExtractCommand}" Style="{StaticResource BigPrimaryButton}" VerticalAlignment="Bottom"
+                                Visibility="{Binding IsIdle, Converter={StaticResource BoolToVis}}"
+                                AutomationProperties.Name="Extrair disco"
+                                AutomationProperties.HelpText="{Binding ExtractDisabledReason}"/>
+                    </Grid>
+                </Grid>
+            </Border>
+            <!-- Destination (compact while copying) -->
+            <Border Grid.Row="1" Margin="0,16,0,0" Padding="16,10">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsExtracting}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                            <DataTrigger Binding="{Binding Mp4.IsActive}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource SectionLabel}">
+                                <Setter Property="Text" Value="COPIANDO PARA"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Mp4.IsActive}" Value="True"><Setter Property="Text" Value="PASTA DO DISCO"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding ExtractionTarget}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Progress / result -->
+            <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,16,0,0"
+                    Visibility="{Binding Progress.IsActive, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="PROGRESSO" Style="{StaticResource SectionLabel}" Margin="0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Progress.CurrentFileName}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                   Margin="14,0,0,0" FontSize="13"/>
+                    </Grid>
+                    <!-- two bars, each with its own label: "Total" (the whole disc) and "Arquivo atual" -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="104"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Total" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <ProgressBar Grid.Column="1" Value="{Binding Progress.OverallFraction}" Height="12" Style="{StaticResource ProgressBarStyle}" VerticalAlignment="Center" AutomationProperties.Name="Progresso total do disco"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Progress.OverallText}" FontSize="18" FontWeight="SemiBold" Margin="14,-4,0,-4" MinWidth="52" TextAlignment="Right"/>
+                    </Grid>
+                    <Grid Grid.Row="2" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="104"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Arquivo atual" Style="{StaticResource MutedText}" FontSize="12.5" VerticalAlignment="Center"/>
+                        <ProgressBar Grid.Column="1" Value="{Binding Progress.FileFraction}" Height="6" Style="{StaticResource ProgressBarStyle}" Opacity="0.75" VerticalAlignment="Center" AutomationProperties.Name="Progresso do arquivo atual"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Progress.FileText}" Style="{StaticResource MutedText}" FontSize="12.5" Margin="14,-6,0,-6" MinWidth="52" TextAlignment="Right"/>
+                    </Grid>
+                    <WrapPanel Grid.Row="3" Margin="0,10,0,0">
+                        <TextBlock Text="{Binding Progress.FilesText}" Margin="0,0,18,0"/>
+                        <TextBlock Text="{Binding Progress.BytesText}" Margin="0,0,18,0" Foreground="{DynamicResource Brush.TextMuted}"/>
+                        <TextBlock Text="{Binding Progress.SpeedText}" Margin="0,0,18,0"/>
+                        <TextBlock Margin="0,0,18,0"><Run Text="Restante "/><Run Text="{Binding Progress.EtaText, Mode=OneWay}" FontWeight="SemiBold"/></TextBlock>
+                        <TextBlock Margin="0,0,18,0"><Run Text="Decorrido "/><Run Text="{Binding Progress.ElapsedText, Mode=OneWay}"/></TextBlock>
+                    </WrapPanel>
+                    <WrapPanel Grid.Row="4" Margin="0,4,0,0">
+                        <TextBlock Text="{Binding Progress.IntactText}" Style="{StaticResource ToneText}" ui:Ui.Tone="Ok" Margin="0,0,18,0"/>
+                        <TextBlock Text="{Binding Progress.ErrorsText}" Margin="0,0,18,0"/>
+                        <TextBlock Text="{Binding Progress.LostText}" Style="{StaticResource ToneText}" ui:Ui.Tone="Danger"/>
+                    </WrapPanel>
+                    <TextBlock Grid.Row="5" Text="{Binding Progress.PhaseText}" TextWrapping="Wrap" Margin="0,10,0,0"
+                               Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding Progress.PhaseTone}" AutomationProperties.LiveSetting="Polite"/>
+                    <WrapPanel Grid.Row="6" Margin="0,10,0,0" HorizontalAlignment="Right">
+                        <Button Content="{Binding Progress.PauseButtonText}" Command="{Binding PauseCommand}" MinWidth="96" Margin="8,0,0,0"/>
+                        <Button Content="Pular arquivo" Command="{Binding SkipCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Insistir mais" Command="{Binding InsistCommand}" Margin="8,0,0,0"
+                                ToolTip="Dá mais 10 minutos para tentar recuperar os trechos com erro de leitura."
+                                Visibility="{Binding Progress.CanInsist, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Cancelar" Command="{Binding CancelCommand}" Style="{StaticResource DangerButton}" Margin="8,0,0,0"/>
+                    </WrapPanel>
+                </Grid>
+            </Border>
+
+            <!-- MP4 conversion (RF-11): its own progress phase after the copy, with a cancel button -->
+            <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,16,0,0"
+                    Visibility="{Binding Mp4.IsActive, Converter={StaticResource BoolToVis}}">
+                <Grid DataContext="{Binding Mp4}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="CONVERTENDO PARA MP4" Style="{StaticResource SectionLabel}" Margin="0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding CurrentName}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                   Margin="14,0,0,0" FontSize="13"/>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <ProgressBar Value="{Binding Fraction}" Minimum="0" Maximum="1" Height="12" AutomationProperties.Name="Progresso da conversão para MP4"/>
+                        <TextBlock Grid.Column="1" Text="{Binding PercentText}" FontSize="18" FontWeight="SemiBold" Margin="14,-4,0,-4" MinWidth="52" TextAlignment="Right"/>
+                    </Grid>
+                    <WrapPanel Grid.Row="2" Margin="0,10,0,0">
+                        <TextBlock Text="{Binding JobText}" Margin="0,0,18,0"/>
+                        <TextBlock Margin="0,0,18,0"><Run Text="Restante "/><Run Text="{Binding EtaText, Mode=OneWay}" FontWeight="SemiBold"/></TextBlock>
+                        <TextBlock Margin="0,0,18,0"><Run Text="Decorrido "/><Run Text="{Binding ElapsedText, Mode=OneWay}"/></TextBlock>
+                    </WrapPanel>
+                    <TextBlock Grid.Row="3" Text="{Binding StatusText}" TextWrapping="Wrap" Margin="0,8,0,0" Style="{StaticResource MutedText}" AutomationProperties.LiveSetting="Polite"/>
+                    <Button Grid.Row="4" Content="{Binding CancelButtonText}" Command="{Binding CancelCommand}" Style="{StaticResource DangerButton}"
+                            HorizontalAlignment="Right" Margin="0,10,0,0"/>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Setter Property="Margin" Value="0,16,0,0"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding HasResult}" Value="True"/>
+                                    <Condition Binding="{Binding Mp4.IsActive}" Value="False"/>
+                                    <Condition Binding="{Binding Progress.IsActive}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid DataContext="{Binding Result}">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="ÚLTIMA EXTRAÇÃO" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding Headline}" FontSize="15.5" FontWeight="SemiBold" TextWrapping="Wrap" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding Tone}"/>
+                        <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,2,0,0"
+                                   Visibility="{Binding Detail, Converter={StaticResource HasValueToVis}}"/>
+                        <TextBlock Text="{Binding CountsText}" Style="{StaticResource MutedText}" Margin="0,6,0,0" FontSize="13"/>
+                    </StackPanel>
+                    <Button Grid.Row="0" Grid.Column="1" Content="Abrir pasta" VerticalAlignment="Top" Margin="16,0,0,0"
+                            Command="{Binding DataContext.OpenResultFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                    <!-- problems and the MP4 conversion text share one scrollable area, so a long result never pushes the card out of the window -->
+                    <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" MaxHeight="42" Margin="0,8,0,0" VerticalAlignment="Top"
+                                  VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <StackPanel>
+                            <TextBlock TextWrapping="Wrap" Margin="0,1,0,6" FontSize="13"
+                                       DataContext="{Binding DataContext.Mp4, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                       Text="{Binding SummaryText}" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding SummaryTone}"
+                                       Visibility="{Binding SummaryText, Converter={StaticResource HasValueToVis}}"/>
+                            <ItemsControl ItemsSource="{Binding Problems}" IsTabStop="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock TextWrapping="Wrap" Margin="0,1" FontSize="13">
+                                            <Run Text="• "/><Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" — "/><Run Text="{Binding Description, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+        </ScrollViewer>
+
+        <!-- ================= Batch side panel ================= -->
+        <Border Grid.Column="3" Style="{StaticResource Card}" Width="252" Margin="16,0,0,0" DataContext="{Binding Batch}"
+                Visibility="{Binding IsEnabled, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="MODO LOTE" Style="{StaticResource SectionLabel}"/>
+                <TextBlock Grid.Row="1" Text="{Binding Instruction}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                <Border Grid.Row="2" Style="{StaticResource ToneBox}" ui:Ui.Tone="Warn" Margin="0,12,0,0"
+                        Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding BlockMessage}" TextWrapping="Wrap" FontSize="13"/>
+                        <ItemsControl ItemsSource="{Binding Actions}" Margin="0,10,0,0" IsTabStop="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Text}" Command="{Binding Command}" Margin="0,0,0,6" HorizontalContentAlignment="Center">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPrimary}" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}"/>
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <TextBlock Grid.Row="3" Text="NESTA SESSÃO" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
+                <Grid Grid.Row="4">
+                    <TextBlock Text="Nenhum disco processado ainda." Style="{StaticResource MutedText}" FontSize="13"
+                               Visibility="{Binding Session.Count, Converter={StaticResource ZeroToVis}}"/>
+                    <ListBox ItemsSource="{Binding Session}" Style="{StaticResource PlainList}" Focusable="False" IsTabStop="False" AutomationProperties.Name="Discos processados nesta sessão">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Focusable" Value="False"/>
+                                <Setter Property="Template">
+                                    <Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Icon}" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding Tone}" FontWeight="Bold"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock FontSize="12.5" Style="{StaticResource ToneText}" ui:Ui.Tone="{Binding Tone}" TextWrapping="Wrap">
+                                            <Run Text="{Binding StatusLine, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+                <Button Grid.Row="5" Content="Sair do modo lote" Command="{Binding ExitCommand}" Margin="0,12,0,0"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
+
+
+
+
+
+
