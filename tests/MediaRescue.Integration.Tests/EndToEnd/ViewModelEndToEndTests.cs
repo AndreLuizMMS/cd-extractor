@@ -273,7 +273,7 @@ public sealed class ViewModelEndToEndTests
             var ext = h.Main.Extract;
             var (folder, disc, cancelled) = await StartAndCancelAfterThreeAsync(h, spec, iso, "discard");
 
-            Directory.EnumerateFiles(cancelled.DiscFolder, "*", SearchOption.AllDirectories).Should().BeEmpty("everything the job wrote is gone, including state and manifest");
+            Directory.Exists(cancelled.DiscFolder).Should().BeFalse("everything the job wrote is gone, including state, manifest and the now-empty disc folder");
             h.Services.Engine.CanResume(disc, h.DestRoot, folder).Should().BeFalse("there is nothing left to continue");
             await ext.ValidateNowAsync();
             ext.WillResume.Should().BeFalse();
