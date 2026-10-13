@@ -28,7 +28,9 @@ public static class StatusPresenter
                 "Conecte um leitor de CD/DVD para começar."),
             ScreenState.NoMedia => new StatusInfo(
                 "Sem disco",
-                $"Insira um disco {drive}.",
+                $"Insira um disco {drive}. Já tem um disco dentro? Então o leitor não conseguiu detectá-lo: " +
+                "abra a bandeja, pressione o disco no eixo central até ouvir o clique (lado gravado para baixo) e feche de novo. " +
+                "Se continuar assim, teste outro disco e ligue o leitor direto em uma porta USB do computador.",
                 StatusTone.Neutral,
                 $"Insira um disco {drive}."),
             ScreenState.TrayOpen => new StatusInfo(

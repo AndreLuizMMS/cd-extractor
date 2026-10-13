@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -84,14 +84,18 @@ public partial class MainWindow : Window
             if (await _vm.ConfirmCloseAsync())
             {
                 _closeConfirmed = true;
-                Close();
+                CloseDeferred();
             }
         }
         catch (Exception)
         {
             _closeConfirmed = true;
-            Close();
+            CloseDeferred();
         }
     }
+
+    // Close() throws when called from inside the Closing event, which happens whenever the confirmation
+    // completes synchronously (nothing in progress). Posting it lets the cancelled close finish first.
+    private void CloseDeferred() => Dispatcher.BeginInvoke(new Action(Close));
 }
 

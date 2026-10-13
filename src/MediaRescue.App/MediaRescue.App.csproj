@@ -12,7 +12,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Keep equal to build\VERSION: dev builds and published builds report the same version (publish.ps1 also passes it on the command line). -->
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <AssemblyTitle>Extrator de Mídias</AssemblyTitle>
     <Product>Extrator de Mídias (MediaRescue)</Product>
     <SatelliteResourceLanguages>pt-BR</SatelliteResourceLanguages>

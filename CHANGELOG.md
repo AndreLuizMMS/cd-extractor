@@ -3,6 +3,16 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 A versão publicada vem de `build\VERSION` (ou da *tag* `v*`).
 
+## [1.0.1] - 2026-10-13
+
+### Corrigido
+
+* Fechar a janela sem nenhuma cópia em andamento mostrava a mensagem de erro inesperado em vez de simplesmente fechar.
+
+### Alterado
+
+* A mensagem "Sem disco" agora orienta o que fazer quando há um disco na bandeja mas o leitor não o detecta.
+
 ## [1.0.0] - 2026-10-12
 
 Primeira versão. Aplicativo portátil para Windows 10/11 (64 bits), autocontido, sem instalador e sem privilégio de administrador.
